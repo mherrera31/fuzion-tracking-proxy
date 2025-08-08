@@ -8,8 +8,8 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 
-app.get('/v3', async (req, res) => {
-  const tracking = req.query.tracking;
+app.get('/v3/package/:tracking', async (req, res) => {
+  const tracking = req.params.tracking;
 
   if (!tracking) {
     return res.status(400).json({ error: 'Tracking requerido.' });
