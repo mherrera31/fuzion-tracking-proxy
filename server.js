@@ -15,7 +15,7 @@ app.get('/v3', async (req, res) => {
     return res.status(400).json({ error: 'Tracking requerido.' });
   }
 
-  const url = `https://app.fuzioncargo.com/index.php/v3/?tracking=${tracking}`;
+  const url = `https://app.fuzioncargo.com/index.php/v3/package/${tracking}`;
 
   try {
     const response = await fetch(url, {
@@ -42,4 +42,3 @@ app.get('/v3', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Proxy Fuzion escuchando en http://localhost:${PORT}`);
 });
-
