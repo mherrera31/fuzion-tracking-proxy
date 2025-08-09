@@ -2,7 +2,11 @@
 /* eslint-disable no-console */
 const express = require("express");
 const cors = require("cors");
-const fetch = require("node-fetch");
+
+// Asegurar que exista fetch (Node 18+)
+if (typeof fetch !== "function") {
+  throw new Error("Este servidor requiere Node 18+ con fetch nativo.");
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -45,7 +49,6 @@ function cacheSet(key, data, ttlMs = CACHE_TTL_MS) {
 
 // =================== UTILS ===================
 async function fetchWithTimeout(url, opts = {}, timeoutMs = PROVIDER_TIMEOUT_MS) {
-  const { AbortController } = globalThis;
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -138,4 +141,39 @@ app.get("/v3/package/:tracking", async (req, res) => {
   const data = await fetchFromProvider(tracking);
   if (data?.error) {
     const code = data.status || 404;
-    return res.status(code).json({ error: true, message: data.message || "not
+    return res.status(code).json({ error: true, message: data.message || "not_found" });
+  }
+  res.json(data);
+});
+
+// Lookup fuzzy
+// GET /v3/package/fuzzy?q=TRACKING
+app.get("/v3/package/fuzzy", async (req, res) => {
+  const q = (req.query.q || "").trim();
+  if (!q) return res.status(400).json({ error: true, message: "missing_query" });
+
+  // 1) intento directo primero
+  let data = await fetchFromProvider(q);
+  if (data && !data.error) return res.json({ match: q, data });
+
+  // 2) candidatos
+  const candidates = buildCandidates(q);
+
+  // 3) probar candidatos en orden
+  for (const cand of candidates) {
+    if (!cand) continue;
+    data = await fetchFromProvider(cand);
+    if (data && !data.error) {
+      return res.json({ match: cand, original: q, data });
+    }
+  }
+
+  // 4) nada
+  return res.status(404).json({ error: true, message: "no_match", original: q });
+});
+
+// =================== START ===================
+app.listen(PORT, () => {
+  console.log(`Fuzion proxy escuchando en :${PORT}`);
+  console.log(`Base proveedor: ${PROVIDER_BASE}`);
+});
