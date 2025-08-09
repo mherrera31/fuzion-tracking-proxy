@@ -1,7 +1,8 @@
 
 {
   "name": "fuzion-tracking-proxy",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "private": true,
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
@@ -10,7 +11,6 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "node-fetch": "^3.3.2"
+    "express": "^4.19.2"
   }
 }
